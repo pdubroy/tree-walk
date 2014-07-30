@@ -1,0 +1,28 @@
+{
+  "name": "tree-walker",
+  "version": "0.1.0",
+  "author": "Patrick Dubroy <pdubroy@gmail.com> (http://dubroy.com)",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "browserify": "^5.9.1",
+    "dirwatch": "^1.1.0",
+    "jshint": "^2.5.2",
+    "tap-spec": "^1.0.1",
+    "tape": "^2.13.4",
+    "watchify": "^1.0.1"
+  },
+  "scripts": {
+    "build": "browserify -d -s tree-walker -o dist/tree-walker-bundle.js index.js",
+    "watch": "watchify -d -s tree-walker -o dist/tree-walker-bundle.js index.js",
+    "test": "tape test/*.js | tap-spec",
+    "test-continuous": "dirwatch *.js test/*.js -c 'which tput && tput clear; date; tape test/*.js' | tap-spec",
+    "prepublish": "npm run build && npm run test && npm run lint",
+    "lint": "jshint index.js lib test"
+  },
+  "description": "Utilities for working with tree structures.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  }
+}
