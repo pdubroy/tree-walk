@@ -5,13 +5,12 @@ tree-walk is a JavaScript library providing useful functions for traversing,
 inspecting, and transforming arbitrary tree structures. It's based on the
 `walk` module that I wrote for [Underscore-contrib](http://documentcloud.github.io/underscore-contrib/).
 
-Basic Traversal
----------------
+Usage
+-----
 
 The most basic operation on a tree is to iterate through all its nodes, which
-is provided by `_.walk.preorder` and `_.walk.postorder`. They can be used in
-much the same way as [Underscore's 'each' function][each]. For example, take
-a simple tree:
+is provided by `preorder` and `postorder`. They can be used in much the same
+way as [Underscore's 'each' function][each]. For example, take a simple tree:
 
 [each]: http://underscorejs.org/#each
 
@@ -22,7 +21,9 @@ a simple tree:
 
 We can do a preorder traversal of the tree:
 
-    _.walk.preorder(tree, function(value, key, parent) {
+    var walk = require('tree-walk');
+
+    walk.preorder(tree, function(value, key, parent) {
       console.log(key + ': ' + value);
     });
 
@@ -38,20 +39,21 @@ which produces the following output:
 
 A preorder traversal visits the nodes in the tree in a top-down fashion: first
 the root node is visited, then all of its child nodes are recursively visited.
-`_.walk.postorder` does the opposite, calling the visitor function for a node
+`postorder` does the opposite, calling the visitor function for a node
 only after visiting all of its child nodes.
 
 Collection Functions
 --------------------
 
-The \_.walk module provides versions of most of the
+This module provides versions of most of the
 [Underscore collection functions](http://underscorejs.org/#collections), with
 some small differences that make them better suited for operating on trees. For
-example, you can use `_.walk.filter` to get a list of all the strings in a tree:
+example, you can use `filter` to get a list of all the strings in a tree:
 
-    _.walk.filter(_.walk.preorder, _.isString);
+    var walk = require('tree-walk');
+    walk.filter(walk.preorder, _.isString);
 
-Like many other functions in _.walk, the argument to `filter` is a function
+Like many other functions in this module, the argument to `filter` is a function
 indicating in what order the nodes should be visited. Currently, only
 `preorder` and `postorder` are supported.
 
@@ -61,22 +63,23 @@ Custom Walkers
 Sometimes, you have a tree structure that can't be naively traversed. A good
 example of this is a DOM tree: because each element has a reference to its
 parent, a naive walk would encounter circular references. To handle such cases,
-you can create a custom walker by invoking `_.walk` as a function, and passing
+you can create a custom walker by invoking `walk` as a function, and passing
 it a function which returns the descendants of a given node. E.g.:
 
-    var domWalker = _.walk(function(el) {
+    var walk = require('tree-walk');
+    var domWalker = walk(function(el) {
       return el.children;
     });
 
-The resulting object has the same functions as `_.walk`, but parameterized
+The resulting object has the same functions as `walk`, but parameterized
 to use the custom walking behavior:
 
-    var buttons = domWalker.filter(_.walk.preorder, function(el) {
+    var buttons = domWalker.filter(walk.preorder, function(el) {
       return el.tagName === 'BUTTON';
     });
 
 However, it's not actually necessary to create custom walkers for DOM nodes --
-_.walk handles DOM nodes specially by default.
+walk handles DOM nodes specially by default.
 
 Parse Trees
 -----------
@@ -101,7 +104,8 @@ following parse tree:
 
 We can create a custom walker for this parse tree:
 
-    var parseTreeWalker = _.walk(function(node) {
+    var walk = require('tree-walk');
+    var parseTreeWalker = walk(function(node) {
       return _.pick(node, 'left', 'right');
     });
 
