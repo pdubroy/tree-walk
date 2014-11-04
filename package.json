@@ -21,9 +21,23 @@
     "prepublish": "npm run build && npm run test && npm run lint",
     "lint": "jshint index.js lib test"
   },
-  "description": "Utilities for working with tree structures.",
+  "description": "Helpers for traversing, inspecting, and transforming arbitrary trees.",
   "main": "index.js",
   "directories": {
     "test": "test"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pdubroy/tree-walk.git"
+  },
+  "keywords": [
+    "traverse",
+    "walk",
+    "tree",
+    "recursive"
+  ],
+  "bugs": {
+    "url": "https://github.com/pdubroy/tree-walk/issues"
+  },
+  "homepage": "https://github.com/pdubroy/tree-walk"
 }
