@@ -3,14 +3,15 @@
   "version": "0.1.0",
   "author": "Patrick Dubroy <pdubroy@gmail.com> (http://dubroy.com)",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "underscore": "^1.7.0"
+  },
   "devDependencies": {
     "browserify": "^5.9.1",
     "dirwatch": "^1.1.0",
     "jshint": "^2.5.2",
     "tap-spec": "^1.0.1",
     "tape": "^2.13.4",
-    "underscore": "^1.7.0",
     "watchify": "^1.0.1"
   },
   "scripts": {
