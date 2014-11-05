@@ -60,9 +60,9 @@ indicating in what order the nodes should be visited. Currently, only
 Custom Walkers
 --------------
 
-Sometimes, you have a tree structure that can't be naively traversed. A good
+Sometimes, you have a tree structure that can't be naïvely traversed. A good
 example of this is a DOM tree: because each element has a reference to its
-parent, a naive walk would encounter circular references. To handle such cases,
+parent, a naïve walk would encounter circular references. To handle such cases,
 you can create a custom walker by invoking `walk` as a function, and passing
 it a function which returns the descendants of a given node. E.g.:
 
