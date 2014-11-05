@@ -214,7 +214,7 @@ test('reject', function(t) {
   t.end();
 });
 
-test('customTraversal', function(t) {
+test('custom traversal', function(t) {
   var tree = getSimpleTestTree();
 
   // Set up a walker that will not traverse the 'val' properties.
@@ -229,6 +229,29 @@ test('customTraversal', function(t) {
   // Check that the default walker is unaffected.
   t.equal(walk.map(tree, walk.postorder, _.identity).length, 14, 'default map still works');
   t.equal(walk.pluckRec(tree, 'val').join(''), '0123456', 'default pluckRec still works');
+
+  t.end();
+});
+
+test('reduce with custom traversal', function(t) {
+  var tree = { op: '+', operands: [
+    { value: 1 },
+    { op: '+', operands: [
+      { value: 2 },
+      { value: 3 }]
+    }
+  ]};
+
+  var walker = walk(function(node) { return node.operands; });
+  var answer = walker.reduce(tree, function(subResults, node) {
+    t.ok(_.isObject(node), 'should only visit objects, not primitives');
+    if ('value' in node)
+      return node.value;
+    t.ok(_.isArray(subResults), 'child results should be an array');
+    if (node.op === '+')
+      return subResults[0] + subResults[1];
+  });
+  t.equal(answer, 6);
 
   t.end();
 });

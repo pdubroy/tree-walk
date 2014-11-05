@@ -45,9 +45,8 @@ function walkImpl(root, traversalStrategy, beforeFunc, afterFunc, context, colle
     var subResults;
     var target = traversalStrategy(value);
     if (_.isObject(target) && !_.isEmpty(target)) {
-      // If collecting results from subtrees, collect them in the same shape
-      // as the parent node.
-      if (collectResults) subResults = _.isArray(value) ? [] : {};
+      // Collect results from subtrees in the same shape as the target.
+      if (collectResults) subResults = _.isArray(target) ? [] : {};
 
       var stop = _.any(target, function(obj, key) {
         var result = _walk(obj, key, value);
