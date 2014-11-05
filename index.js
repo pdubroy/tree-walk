@@ -1,8 +1,7 @@
 // Copyright (c) 2014 Patrick Dubroy <pdubroy@gmail.com>
 // This software is distributed under the terms of the MIT License.
 
-var _ = require('underscore'),
-    extend = require('util-extend');
+var extend = require('util-extend');
 
 // An internal object that can be returned from a visitor function to
 // prevent a top-down walk from walking subtrees of a node.
@@ -13,9 +12,32 @@ var stopRecursion = {};
 var stopWalk = {};
 
 var notTreeError = 'Not a tree: same object found in two different branches';
+var hasOwnProp = Object.prototype.hasOwnProperty;
 
 // Helpers
 // -------
+
+// Replacement for a few functions from Underscore that we need.
+var _ = {
+  any: function(obj, predicate) {
+    if (obj === null || !obj) return false;
+    var keys = obj.length !== +obj.length && Object.keys(obj),
+        length = (keys || obj).length,
+        index, currentKey;
+    for (index = 0; index < length; index++) {
+      currentKey = keys ? keys[index] : index;
+      if (predicate(obj[currentKey], currentKey, obj)) return true;
+    }
+    return false;
+  },
+  isElement: function(obj) {
+    return !!(obj && obj.nodeType === 1);
+  },
+  isObject: function(obj) {
+    var type = typeof obj;
+    return type === 'function' || type === 'object' && !!obj;
+  }
+};
 
 // Implements the default traversal strategy: if `obj` is a DOM node, walk
 // its DOM children; otherwise, walk all the objects it references.
@@ -45,9 +67,9 @@ function walkImpl(root, traversalStrategy, beforeFunc, afterFunc, context, colle
 
     var subResults;
     var target = traversalStrategy(value);
-    if (_.isObject(target) && !_.isEmpty(target)) {
+    if (_.isObject(target)) {
       // Collect results from subtrees in the same shape as the target.
-      if (collectResults) subResults = _.isArray(target) ? [] : {};
+      if (collectResults) subResults = Array.isArray(target) ? [] : {};
 
       var stop = _.any(target, function(obj, key) {
         var result = _walk(obj, key, value);
@@ -66,7 +88,7 @@ function pluck(obj, propertyName, recursive) {
   this.preorder(obj, function(value, key) {
     if (!recursive && key == propertyName)
       return stopRecursion;
-    if (_.has(value, propertyName))
+    if (hasOwnProp.call(value, propertyName))
       results[results.length] = value[propertyName];
   });
   return results;
