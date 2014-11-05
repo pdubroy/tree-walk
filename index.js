@@ -1,7 +1,8 @@
 // Copyright (c) 2014 Patrick Dubroy <pdubroy@gmail.com>
 // This software is distributed under the terms of the MIT License.
 
-var _ = require('underscore');
+var _ = require('underscore'),
+    extend = require('util-extend');
 
 // An internal object that can be returned from a visitor function to
 // prevent a top-down walk from walking subtrees of a node.
@@ -71,7 +72,18 @@ function pluck(obj, propertyName, recursive) {
   return results;
 }
 
-var exports = {
+// Returns an object containing the walk functions. If `traversalStrategy`
+// is specified, it is a function determining how objects should be
+// traversed. Given an object, it returns the object to be recursively
+// walked. The default strategy is equivalent to `_.identity` for regular
+// objects, and for DOM nodes it returns the node's DOM children.
+function Walker(traversalStrategy) {
+  if (!(this instanceof Walker))
+    return new Walker(traversalStrategy);
+  this._traversalStrategy = traversalStrategy || defaultTraversal;
+}
+
+extend(Walker.prototype, {
   // Performs a preorder traversal of `obj` and returns the first value
   // which passes a truth test.
   find: function(obj, visitor, context) {
@@ -159,29 +171,16 @@ var exports = {
     };
     return walkImpl(obj, this._traversalStrategy, null, reducer, context, true);
   }
-};
+});
 
-exports.each = exports.preorder;
+var WalkerProto = Walker.prototype;
 
-// Set up aliases to match those in underscore.js.
-exports.collect = exports.map;
-exports.detect = exports.find;
-exports.select = exports.filter;
+// Set up a few convenient aliases.
+WalkerProto.each = WalkerProto.preorder;
+WalkerProto.collect = WalkerProto.map;
+WalkerProto.detect = WalkerProto.find;
+WalkerProto.select = WalkerProto.filter;
 
-// Returns an object containing the walk functions. If `traversalStrategy`
-// is specified, it is a function determining how objects should be
-// traversed. Given an object, it returns the object to be recursively
-// walked. The default strategy is equivalent to `_.identity` for regular
-// objects, and for DOM nodes it returns the node's DOM children.
-function walk(traversalStrategy) {
-  var walker = _.clone(exports);
-
-  // Bind all of the public functions in the walker to itself. This allows
-  // the traversal strategy to be dynamically scoped.
-  _.bindAll.apply(null, [walker].concat(_.keys(walker)));
-
-  walker._traversalStrategy = traversalStrategy || defaultTraversal;
-  return walker;
-}
-
-module.exports = _.extend(walk, walk(defaultTraversal));
+// Export the walker constructor, but make it behave like an instance.
+Walker._traversalStrategy = defaultTraversal;
+module.exports = extend(Walker, WalkerProto);

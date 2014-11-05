@@ -4,7 +4,8 @@
   "author": "Patrick Dubroy <pdubroy@gmail.com> (http://dubroy.com)",
   "license": "MIT",
   "dependencies": {
-    "underscore": "^1.7.0"
+    "underscore": "^1.7.0",
+    "util-extend": "^1.0.1"
   },
   "devDependencies": {
     "browserify": "^5.9.1",
