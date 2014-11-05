@@ -161,6 +161,8 @@ var exports = {
   }
 };
 
+exports.each = exports.preorder;
+
 // Set up aliases to match those in underscore.js.
 exports.collect = exports.map;
 exports.detect = exports.find;
