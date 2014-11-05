@@ -40,6 +40,8 @@ if (typeof WeakMap === 'undefined') {
       }
     };
 
-    window.WeakMap = WeakMap;
+    module.exports = WeakMap;
   })();
+} else {
+  module.exports = WeakMap;
 }
