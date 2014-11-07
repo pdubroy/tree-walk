@@ -255,3 +255,35 @@ test('reduce with custom traversal', function(t) {
 
   t.end();
 });
+
+test('attributes', function(t) {
+  var tree = getSimpleTestTree();
+
+  // Set up a walker that will not traverse the 'val' properties.
+  var walker = walk(function(node) {
+    return _.omit(node, 'val');
+  });
+
+  var count = 0;
+  var min = walker.createAttribute(function(subResults, node) {
+    count++;
+    if (subResults)
+      return Math.min(node.val, Math.min(subResults.l, subResults.r));
+    return node.val;
+  });
+  t.equal(min(tree), 0);
+  t.equal(count, 7);
+  t.equal(min(tree), 0);
+  t.equal(min(tree.l), 1);
+  t.equal(min(tree.r), 4);
+  t.equal(count, 7, 'visitor should be memoized for all nodes');
+
+  var max = walker.createAttribute(function(subResults, node) {
+    if (subResults)
+      return Math.max(node.val, Math.max(subResults.l, subResults.r));
+    return node.val;
+  });
+  t.equal(max(tree), 6);
+
+  t.end();
+});

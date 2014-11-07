@@ -16,7 +16,7 @@
   },
   "scripts": {
     "build": "browserify -d -s tree-walker -o dist/tree-walker-bundle.js index.js",
-    "watch": "watchify -d -s tree-walker -o dist/tree-walker-bundle.js index.js",
+    "watch": "watchify -v -d -s tree-walker -o dist/tree-walker-bundle.js index.js",
     "test": "tape test/*.js | tap-spec",
     "test-continuous": "dirwatch *.js test/*.js -c 'which tput && tput clear; date; tape test/*.js' | tap-spec",
     "prepublish": "npm run build && npm run test && npm run lint",

@@ -1,7 +1,10 @@
 // Copyright (c) 2014 Patrick Dubroy <pdubroy@gmail.com>
 // This software is distributed under the terms of the MIT License.
 
-var extend = require('util-extend');
+/* global -WeakMap */
+
+var extend = require('util-extend'),
+    WeakMap = require('./third_party/WeakMap');
 
 // An internal object that can be returned from a visitor function to
 // prevent a top-down walk from walking subtrees of a node.
@@ -14,13 +17,28 @@ var stopWalk = {};
 var notTreeError = 'Not a tree: same object found in two different branches';
 var hasOwnProp = Object.prototype.hasOwnProperty;
 
+// CycleDetector
+// -------------
+
+// A CycleDetector keeps track of objects that have been visited, and throws
+// an exception when trying to visit the same object twice.
+function CycleDetector() {
+  this._visited = [];
+}
+
+CycleDetector.prototype.checkAndAdd = function(obj) {
+  if (this._visited.indexOf(obj) >= 0)
+    throw new TypeError(notTreeError);
+  this._visited.push(obj);
+};
+
 // Helpers
 // -------
 
 // Replacement for a few functions from Underscore that we need.
 var _ = {
   any: function(obj, predicate) {
-    if (obj === null || !obj) return false;
+    if (obj === null) return false;
     var keys = obj.length !== +obj.length && Object.keys(obj),
         length = (keys || obj).length,
         index, currentKey;
@@ -36,6 +54,10 @@ var _ = {
   isObject: function(obj) {
     var type = typeof obj;
     return type === 'function' || type === 'object' && !!obj;
+  },
+  size: function(obj) {
+    if (obj === null) return 0;
+    return obj.length === +obj.length ? obj.length : Object.keys(obj).length;
   }
 };
 
@@ -50,14 +72,10 @@ function defaultTraversal(obj) {
 // If `collectResults` is true, the last argument to `afterFunc` will be a
 // collection of the results of walking the node's subtrees.
 function walkImpl(root, traversalStrategy, beforeFunc, afterFunc, context, collectResults) {
-  var visited = [];
+  var cycleDetector = new CycleDetector();
   return (function _walk(value, key, parent) {
-    // Keep track of objects that have been visited, and throw an exception
-    // when trying to visit the same object twice.
-    if (_.isObject(value)) {
-      if (visited.indexOf(value) >= 0) throw new TypeError(notTreeError);
-      visited.push(value);
-    }
+    if (_.isObject(value))
+      cycleDetector.checkAndAdd(value);
 
     if (beforeFunc) {
       var result = beforeFunc.call(context, value, key, parent);
@@ -67,7 +85,7 @@ function walkImpl(root, traversalStrategy, beforeFunc, afterFunc, context, colle
 
     var subResults;
     var target = traversalStrategy(value);
-    if (_.isObject(target)) {
+    if (_.isObject(target) && _.size(target) > 0) {
       // Collect results from subtrees in the same shape as the target.
       if (collectResults) subResults = Array.isArray(target) ? [] : {};
 
@@ -92,6 +110,13 @@ function pluck(obj, propertyName, recursive) {
       results[results.length] = value[propertyName];
   });
   return results;
+}
+
+function defineEnumerableProperty(obj, propName, getterFn) {
+  Object.defineProperty(obj, propName, {
+    enumerable: true,
+    get: getterFn
+  });
 }
 
 // Returns an object containing the walk functions. If `traversalStrategy`
@@ -192,6 +217,38 @@ extend(Walker.prototype, {
       return visitor(subResults || leafMemo, value, key, parent);
     };
     return walkImpl(obj, this._traversalStrategy, null, reducer, context, true);
+  },
+
+  // An 'attribute' is a value that is calculated by invoking a visitor
+  // function on a node. The first argument of the visitor is a collection
+  // of the attribute values for the node's children. These are calculated
+  // lazily -- in this way the visitor can decide in what order to visit the
+  // subtrees.
+  createAttribute: function(visitor, defaultValue, context) {
+    var self = this;
+    var memo = new WeakMap();
+    function _visit(cycleDetector, value, key, parent) {
+      if (_.isObject(value))
+        cycleDetector.checkAndAdd(value);
+
+      if (memo.has(value))
+        return memo.get(value);
+
+      var subResults;
+      var target = self._traversalStrategy(value);
+      if (_.isObject(target) && _.size(target) > 0) {
+        subResults = {};
+        _.any(target, function(child, k) {
+          defineEnumerableProperty(subResults, k, function() {
+            return _visit(cycleDetector, child, k, value);
+          });
+        });
+      }
+      var result = visitor.call(context, subResults, value, key, parent);
+      memo.set(value, result);
+      return result;
+    }
+    return function(obj) { return _visit(new CycleDetector(), obj); };
   }
 });
 
