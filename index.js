@@ -14,23 +14,7 @@ var stopRecursion = {};
 // cause the walk to immediately stop.
 var stopWalk = {};
 
-var notTreeError = 'Not a tree: same object found in two different branches';
 var hasOwnProp = Object.prototype.hasOwnProperty;
-
-// CycleDetector
-// -------------
-
-// A CycleDetector keeps track of objects that have been visited, and throws
-// an exception when trying to visit the same object twice.
-function CycleDetector() {
-  this._visited = [];
-}
-
-CycleDetector.prototype.checkAndAdd = function(obj) {
-  if (this._visited.indexOf(obj) >= 0)
-    throw new TypeError(notTreeError);
-  this._visited.push(obj);
-};
 
 // Helpers
 // -------
@@ -61,6 +45,13 @@ var _ = {
   }
 };
 
+// Makes a shallow copy of `arr`, and adds `obj` to the end of the copy.
+function copyAndPush(arr, obj) {
+  var result = arr.slice();
+  result.push(obj);
+  return result;
+}
+
 // Implements the default traversal strategy: if `obj` is a DOM node, walk
 // its DOM children; otherwise, walk all the objects it references.
 function defaultTraversal(obj) {
@@ -72,10 +63,9 @@ function defaultTraversal(obj) {
 // If `collectResults` is true, the last argument to `afterFunc` will be a
 // collection of the results of walking the node's subtrees.
 function walkImpl(root, traversalStrategy, beforeFunc, afterFunc, context, collectResults) {
-  var cycleDetector = new CycleDetector();
-  return (function _walk(value, key, parent) {
-    if (_.isObject(value))
-      cycleDetector.checkAndAdd(value);
+  return (function _walk(stack, value, key, parent) {
+    if (_.isObject(value) && stack.indexOf(value) >= 0)
+      throw new TypeError('A cycle was detected at ' + value);
 
     if (beforeFunc) {
       var result = beforeFunc.call(context, value, key, parent);
@@ -85,19 +75,20 @@ function walkImpl(root, traversalStrategy, beforeFunc, afterFunc, context, colle
 
     var subResults;
     var target = traversalStrategy(value);
+
     if (_.isObject(target) && _.size(target) > 0) {
       // Collect results from subtrees in the same shape as the target.
       if (collectResults) subResults = Array.isArray(target) ? [] : {};
 
       var stop = _.any(target, function(obj, key) {
-        var result = _walk(obj, key, value);
+        var result = _walk(copyAndPush(stack, value), obj, key, value);
         if (result === stopWalk) return true;
         if (subResults) subResults[key] = result;
       });
       if (stop) return stopWalk;
     }
     if (afterFunc) return afterFunc.call(context, value, key, parent, subResults);
-  })(root);
+  })([], root);
 }
 
 // Internal helper providing the implementation for `pluck` and `pluckRec`.
@@ -227,9 +218,9 @@ extend(Walker.prototype, {
   createAttribute: function(visitor, defaultValue, context) {
     var self = this;
     var memo = new WeakMap();
-    function _visit(cycleDetector, value, key, parent) {
-      if (_.isObject(value))
-        cycleDetector.checkAndAdd(value);
+    function _visit(stack, value, key, parent) {
+      if (_.isObject(value) && stack.indexOf(value) >= 0)
+        throw new TypeError('A cycle was detected at ' + value);
 
       if (memo.has(value))
         return memo.get(value);
@@ -240,7 +231,7 @@ extend(Walker.prototype, {
         subResults = {};
         _.any(target, function(child, k) {
           defineEnumerableProperty(subResults, k, function() {
-            return _visit(cycleDetector, child, k, value);
+            return _visit(copyAndPush(stack,value), child, k, value);
           });
         });
       }
@@ -248,7 +239,7 @@ extend(Walker.prototype, {
       memo.set(value, result);
       return result;
     }
-    return function(obj) { return _visit(new CycleDetector(), obj); };
+    return function(obj) { return _visit([], obj); };
   }
 });
 

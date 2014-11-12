@@ -44,12 +44,32 @@ test('basic', function(t) {
 test('circularRefs', function(t) {
   var tree = getSimpleTestTree();
   tree.l.l.r = tree;
-  t.throws(function() { walk.preorder(tree, _.identity); }, TypeError, 'preorder t.throws an exception');
-  t.throws(function() { walk.postrder(tree, _.identity); }, TypeError, 'postorder t.throws an exception');
+  t.throws(function() { walk.preorder(tree, _.identity); }, /cycle/, 'preorder t.throws an exception');
+  t.throws(function() { walk.postorder(tree, _.identity); }, /cycle/, 'postorder t.throws an exception');
 
   tree = getSimpleTestTree();
   tree.r.l = tree.r;
-  t.throws(function() { walk.preorder(tree, _.identity); }, TypeError, 'exception for a self-referencing node');
+  t.throws(function() { walk.preorder(tree, _.identity); }, /cycle/, 'exception for a self-referencing node');
+
+  tree = getSimpleTestTree();
+  tree.l.l = tree.l.r = {};
+  t.ok(walk.reduce(tree, function() { return true; }), "same object can be in diff't branches");
+
+  tree.l.l = tree.l.r = 'hai';
+  t.ok(walk.reduce(tree, function() { return true; }), "same string can be in diff't branches");
+
+  // Create a custom walker that reuses the same object as the walk target.
+  // This should not be considered a cycle.
+  var wrapper = [];
+  var walker = walk(function(node, key) {
+    if (node && node.hasOwnProperty('val')) {
+      wrapper[0] = node.l;
+      wrapper[1] = node.r;
+      return wrapper;
+    }
+    return node;
+  });
+  t.ok(walker.reduce(tree, function() { return true; }), 'target object can be the same');
 
   t.end();
 });
