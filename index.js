@@ -19,31 +19,24 @@ var hasOwnProp = Object.prototype.hasOwnProperty;
 // Helpers
 // -------
 
-// Replacement for a few functions from Underscore that we need.
-var _ = {
-  any: function(obj, predicate) {
-    if (obj === null) return false;
-    var keys = obj.length !== +obj.length && Object.keys(obj),
-        length = (keys || obj).length,
-        index, currentKey;
-    for (index = 0; index < length; index++) {
-      currentKey = keys ? keys[index] : index;
-      if (predicate(obj[currentKey], currentKey, obj)) return true;
+function isElement(obj) {
+  return !!(obj && obj.nodeType === 1);
+}
+
+function isObject(obj) {
+  var type = typeof obj;
+  return type === 'function' || type === 'object' && !!obj;
+}
+
+function each(obj, predicate) {
+  for (var k in obj) {
+    if (obj.hasOwnProperty(k)) {
+      if (predicate(obj[k], k, obj))
+        return false;
     }
-    return false;
-  },
-  isElement: function(obj) {
-    return !!(obj && obj.nodeType === 1);
-  },
-  isObject: function(obj) {
-    var type = typeof obj;
-    return type === 'function' || type === 'object' && !!obj;
-  },
-  size: function(obj) {
-    if (obj === null) return 0;
-    return obj.length === +obj.length ? obj.length : Object.keys(obj).length;
   }
-};
+  return true;
+}
 
 // Makes a shallow copy of `arr`, and adds `obj` to the end of the copy.
 function copyAndPush(arr, obj) {
@@ -55,7 +48,7 @@ function copyAndPush(arr, obj) {
 // Implements the default traversal strategy: if `obj` is a DOM node, walk
 // its DOM children; otherwise, walk all the objects it references.
 function defaultTraversal(obj) {
-  return _.isElement(obj) ? obj.children : obj;
+  return isElement(obj) ? obj.children : obj;
 }
 
 // Walk the tree recursively beginning with `root`, calling `beforeFunc`
@@ -64,7 +57,7 @@ function defaultTraversal(obj) {
 // collection of the results of walking the node's subtrees.
 function walkImpl(root, traversalStrategy, beforeFunc, afterFunc, context, collectResults) {
   return (function _walk(stack, value, key, parent) {
-    if (_.isObject(value) && stack.indexOf(value) >= 0)
+    if (isObject(value) && stack.indexOf(value) >= 0)
       throw new TypeError('A cycle was detected at ' + value);
 
     if (beforeFunc) {
@@ -76,16 +69,16 @@ function walkImpl(root, traversalStrategy, beforeFunc, afterFunc, context, colle
     var subResults;
     var target = traversalStrategy(value);
 
-    if (_.isObject(target) && _.size(target) > 0) {
+    if (isObject(target) && Object.keys(target).length > 0) {
       // Collect results from subtrees in the same shape as the target.
       if (collectResults) subResults = Array.isArray(target) ? [] : {};
 
-      var stop = _.any(target, function(obj, key) {
+      var ok = each(target, function(obj, key) {
         var result = _walk(copyAndPush(stack, value), obj, key, value);
-        if (result === stopWalk) return true;
+        if (result === stopWalk) return false;
         if (subResults) subResults[key] = result;
       });
-      if (stop) return stopWalk;
+      if (!ok) return stopWalk;
     }
     if (afterFunc) return afterFunc.call(context, value, key, parent, subResults);
   })([], root);
@@ -219,7 +212,7 @@ extend(Walker.prototype, {
     var self = this;
     var memo = new WeakMap();
     function _visit(stack, value, key, parent) {
-      if (_.isObject(value) && stack.indexOf(value) >= 0)
+      if (isObject(value) && stack.indexOf(value) >= 0)
         throw new TypeError('A cycle was detected at ' + value);
 
       if (memo.has(value))
@@ -227,9 +220,9 @@ extend(Walker.prototype, {
 
       var subResults;
       var target = self._traversalStrategy(value);
-      if (_.isObject(target) && _.size(target) > 0) {
+      if (isObject(target) && Object.keys(target).length > 0) {
         subResults = {};
-        _.any(target, function(child, k) {
+        each(target, function(child, k) {
           defineEnumerableProperty(subResults, k, function() {
             return _visit(copyAndPush(stack,value), child, k, value);
           });

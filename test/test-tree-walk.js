@@ -3,15 +3,15 @@ var test = require('tape'),
 
 var walk = require('../');
 
-var getSimpleTestTree = function() {
+function getSimpleTestTree() {
   return {
     val: 0,
     l: { val: 1, l: { val: 2 }, r: { val: 3 } },
     r: { val: 4, l: { val: 5 }, r: { val: 6 } }
   };
-};
+}
 
-var getMixedTestTree = function() {
+function getMixedTestTree() {
   return {
     current:
       { city: 'Munich', aliases: ['Muenchen'], population: 1378000 },
@@ -20,7 +20,7 @@ var getMixedTestTree = function() {
       { city: 'Toronto', aliases: ['TO', 'T-dot'], population: 2615000 }
     ]
   };
-};
+}
 
 test('basic', function(t) {
   // Updates the value of `node` to be the sum of the values of its subtrees.
@@ -37,6 +37,20 @@ test('basic', function(t) {
   tree = getSimpleTestTree();
   walk.preorder(tree, visitor);
   t.equal(tree.val, 5, 'should visit subtrees after the node itself');
+
+  var f = function(x, y) {};
+  var visited = walk.map(f, walk.preorder, _.identity);
+  t.deepEquals(visited, [f], 'function w/ no properties is treated as a leaf');
+
+  f.foo = 3;
+  visited = walk.map(f, walk.preorder, _.identity);
+  t.deepEqual(visited, [f, 3], 'own property of function is be visited');
+
+  (function(x) {
+    visited = walk.map(arguments, walk.preorder, _.identity);
+  })('x', 99);
+  t.equal(visited.length, 3);
+  t.deepEqual(visited.slice(1), ['x', 99], 'arguments is treated like an array');
 
   t.end();
 });
