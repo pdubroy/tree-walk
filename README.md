@@ -5,6 +5,8 @@ tree-walk is a JavaScript library providing useful functions for traversing,
 inspecting, and transforming arbitrary tree structures. It's based on the
 `walk` module that I wrote for [Underscore-contrib](http://documentcloud.github.io/underscore-contrib/).
 
+[![NPM](https://nodei.co/npm/tree-walk.png?compact=true)](https://nodei.co/npm/tree-walk/)
+
 Usage
 -----
 
