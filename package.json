@@ -1,6 +1,6 @@
 {
   "name": "tree-walk",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "author": "Patrick Dubroy <pdubroy@gmail.com> (http://dubroy.com)",
   "license": "MIT",
   "dependencies": {
