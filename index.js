@@ -28,6 +28,10 @@ function isObject(obj) {
   return type === 'function' || type === 'object' && !!obj;
 }
 
+function isString(obj) {
+  return Object.prototype.toString.call(obj) === '[object String]';
+}
+
 function each(obj, predicate) {
   for (var k in obj) {
     if (obj.hasOwnProperty(k)) {
@@ -36,6 +40,16 @@ function each(obj, predicate) {
     }
   }
   return true;
+}
+
+// Returns a copy of `obj` containing only the properties given by `keys`.
+function pick(obj, keys) {
+  var result = {};
+  for (var i = 0, length = keys.length; i < length; i++) {
+    var key = keys[i];
+    if (key in obj) result[key] = obj[key];
+  }
+  return result;
 }
 
 // Makes a shallow copy of `arr`, and adds `obj` to the end of the copy.
@@ -111,6 +125,22 @@ function defineEnumerableProperty(obj, propName, getterFn) {
 function Walker(traversalStrategy) {
   if (!(this instanceof Walker))
     return new Walker(traversalStrategy);
+
+  // There are two different strategy shorthands: if a single string is
+  // specified, treat the value of that property as the traversal target.
+  // If an array is specified, the traversal target is the node itself, but
+  // only the properties contained in the array will be traversed.
+  if (isString(traversalStrategy)) {
+    var prop = traversalStrategy;
+    traversalStrategy = function(node) {
+      if (isObject(node) && prop in node) return node[prop];
+    };
+  } else if (Array.isArray(traversalStrategy)) {
+    var props = traversalStrategy;
+    traversalStrategy = function(node) {
+      if (isObject(node)) return pick(node, props);
+    };
+  }
   this._traversalStrategy = traversalStrategy || defaultTraversal;
 }
 

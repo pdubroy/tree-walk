@@ -22,6 +22,10 @@ function getMixedTestTree() {
   };
 }
 
+function getVal(node) {
+  return node.val;
+}
+
 test('basic', function(t) {
   // Updates the value of `node` to be the sum of the values of its subtrees.
   // Ignores leaf nodes.
@@ -263,6 +267,28 @@ test('custom traversal', function(t) {
   // Check that the default walker is unaffected.
   t.equal(walk.map(tree, walk.postorder, _.identity).length, 14, 'default map still works');
   t.equal(walk.pluckRec(tree, 'val').join(''), '0123456', 'default pluckRec still works');
+
+  t.end();
+});
+
+test('custom traversal shorthand', function(t) {
+  var tree = getSimpleTestTree();
+
+  t.deepEqual(walk(['l']).map(tree, walk.preorder, getVal), [0, 1, 2]);
+  t.deepEqual(walk(['l', 'r']).map(tree, walk.preorder, getVal), [0, 1, 2, 3, 4, 5, 6]);
+
+  t.deepEqual(walk(['l', 'z']).map(tree, walk.preorder, getVal), [0, 1, 2]);
+  t.deepEqual(walk([]).map(tree, walk.preorder, getVal), [0], 'with empty array, just visits root');
+  t.deepEqual(walk('z').map(tree, walk.preorder, getVal), [0], 'with unknown keys, just visits root');
+
+  // When just a string is passed as the traversal strategy, the behaviour is
+  // subtly different: the traversal target (in this case, the array of child
+  // nodes) is not treated as a node.
+  tree = { val: 0, children: [{ val: 1, children: [] }, { val: 2 }]};
+  t.deepEqual(walk('children').map(tree, walk.preorder, getVal), [0, 1, 2]);
+  t.deepEqual(walk(['children']).map(tree, walk.preorder, getVal), [0, undefined]);
+
+  t.deepEqual(walk('z').map(tree, walk.preorder, getVal), [0], 'with unknown key, just visits root');
 
   t.end();
 });
