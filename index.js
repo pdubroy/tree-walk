@@ -1,10 +1,10 @@
 // Copyright (c) 2014 Patrick Dubroy <pdubroy@gmail.com>
 // This software is distributed under the terms of the MIT License.
 
-/* global -WeakMap */
+'use strict';
 
 var extend = require('util-extend'),
-    WeakMap = require('./third_party/WeakMap');
+    WeakMap = require('./third_party/WeakMap');  // eslint-disable-line no-undef,no-native-reassign
 
 // An internal object that can be returned from a visitor function to
 // prevent a top-down walk from walking subtrees of a node.
@@ -77,7 +77,7 @@ function walkImpl(root, traversalStrategy, beforeFunc, afterFunc, context, colle
     if (beforeFunc) {
       var result = beforeFunc.call(context, value, key, parent);
       if (result === stopWalk) return stopWalk;
-      if (result === stopRecursion) return;
+      if (result === stopRecursion) return;  // eslint-disable-line consistent-return
     }
 
     var subResults;
@@ -102,7 +102,7 @@ function walkImpl(root, traversalStrategy, beforeFunc, afterFunc, context, colle
 function pluck(obj, propertyName, recursive) {
   var results = [];
   this.preorder(obj, function(value, key) {
-    if (!recursive && key == propertyName)
+    if (!recursive && key === propertyName)
       return stopRecursion;
     if (hasOwnProp.call(value, propertyName))
       results[results.length] = value[propertyName];
@@ -254,7 +254,7 @@ extend(Walker.prototype, {
         subResults = {};
         each(target, function(child, k) {
           defineEnumerableProperty(subResults, k, function() {
-            return _visit(copyAndPush(stack,value), child, k, value);
+            return _visit(copyAndPush(stack, value), child, k, value);
           });
         });
       }

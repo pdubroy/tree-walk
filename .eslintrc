@@ -18,6 +18,9 @@
     // Enforce the name 'self' when assigning `this` to a local variable.
     "consistent-this": [0, "self"],
 
+    // Allow braces to be omitted from `if` statements, etc.
+    curly: [0],
+
     // Enforce two-space indentation.
     "indent": [2, 2, {indentSwitchCase: true}],
 

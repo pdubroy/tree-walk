@@ -12,6 +12,7 @@
     "eslint": "^0.17.1",
     "tap-spec": "^1.0.1",
     "tape": "^2.13.4",
+    "underscore": "^1.8.2",
     "watchify": "^1.0.1"
   },
   "scripts": {
@@ -20,7 +21,7 @@
     "test": "tape test/*.js | tap-spec",
     "test-continuous": "dirwatch *.js test/*.js -c 'which tput && tput clear; date; tape test/*.js' | tap-spec",
     "prepublish": "npm run build && npm run test && npm run lint",
-    "lint": "jshint index.js lib test"
+    "lint": "eslint *.js lib test"
   },
   "description": "Helpers for traversing, inspecting, and transforming arbitrary trees.",
   "main": "index.js",

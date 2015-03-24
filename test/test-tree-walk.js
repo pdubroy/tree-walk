@@ -1,3 +1,7 @@
+'use strict';
+
+/* global document */
+
 var test = require('tape'),
     _ = require('underscore');
 
@@ -37,7 +41,7 @@ test('basic', function(t) {
   var tree = getSimpleTestTree();
   walk.postorder(tree, visitor);
   t.equal(tree.val, 16, 'should visit subtrees first');
-  
+
   tree = getSimpleTestTree();
   walk.preorder(tree, visitor);
   t.equal(tree.val, 5, 'should visit subtrees after the node itself');
@@ -96,7 +100,7 @@ test('simpleMap', function(t) {
   var visitor = function(node, key) {
     if (_.has(node, 'val')) return node.val;
     if (key !== 'val') throw new Error('Leaf node with incorrect key');
-    return this.leafChar || '-';
+    return this && this.leafChar || '-';
   };
   var visited = walk.map(getSimpleTestTree(), walk.preorder, visitor).join('');
   t.equal(visited, '0-1-2-3-4-5-6-', 'pre-order map');
@@ -111,8 +115,7 @@ test('simpleMap', function(t) {
   visited = walk.map(getSimpleTestTree(), walk.postorder, visitor, context).join('');
   t.equal(visited, '***2*31**5*640', 'post-order with context');
 
-  var document = global.document;
-  if (document) {
+  if (typeof document !== 'undefined') {
     var root = document.querySelector('#map-test');
     var ids = walk.map(root, walk.preorder, function(el) { return el.id; });
     t.deepEqual(ids, ['map-test', 'id1', 'id2'], 'preorder map with DOM elements');
@@ -190,7 +193,7 @@ test('reduce', function(t) {
     return _.extend(_.clone(node), { l: memo.r, r: memo.l });
   };
   // Returns the '-' for internal nodes, and the value itself for leaves.
-  var toString =  function(node) { return _.has(node, 'val') ? '-' : node; };
+  var toString = function(node) { return _.has(node, 'val') ? '-' : node; };
 
   tree = walk.reduce(getSimpleTestTree(), mirror);
   t.equal(walk.reduce(tree, sum, leafMemo), 21);
@@ -207,7 +210,7 @@ test('find', function(t) {
   var findValue = function(value) {
     var found = false;
     return function(node) {
-      if (found) throw 'already found!';
+      if (found) throw new Error('already found!');
       found = (node.val === value);
       return found;
     };
