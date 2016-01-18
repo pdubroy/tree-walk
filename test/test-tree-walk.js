@@ -350,3 +350,19 @@ test('attributes', function(t) {
 
   t.end();
 });
+
+test('stopping recursion', function(t) {
+  var tree = getSimpleTestTree();
+  var vals = [];
+  walk.preorder(tree, function(node, key) {
+    if (key === 'l') {
+      return walk.STOP_RECURSION;
+    }
+    if (_.isObject(node)) {
+      vals.push(node.val);
+    }
+  });
+  t.deepEqual(vals, [0, 4, 6]);
+
+  t.end();
+});

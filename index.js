@@ -145,6 +145,8 @@ function Walker(traversalStrategy) {
 }
 
 extend(Walker.prototype, {
+  STOP_RECURSION: stopRecursion,
+
   // Performs a preorder traversal of `obj` and returns the first value
   // which passes a truth test.
   find: function(obj, visitor, context) {
