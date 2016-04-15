@@ -223,6 +223,16 @@ extend(Walker.prototype, {
     walkImpl(obj, traversalStrategy, visitor, null, context);
   },
 
+  // Recursively traverses `obj` in a depth-first fashion, invoking the
+  // `preVisitor` function for each object before traversing its children
+  // and the `postVisitor` function after traversing its children
+  // `traversalStrategy` is intended for internal callers, and is not part
+  // of the public API.
+  walk: function(obj, preVisitor, postVisitor, context, traversalStrategy) {
+    traversalStrategy = traversalStrategy || this._traversalStrategy;
+    walkImpl(obj, traversalStrategy, preVisitor, postVisitor, context);
+  },
+
   // Builds up a single value by doing a post-order traversal of `obj` and
   // calling the `visitor` function on each object in the tree. For leaf
   // objects, the `memo` argument to `visitor` is the value of the `leafMemo`
