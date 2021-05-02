@@ -16,28 +16,34 @@ way as [Underscore's 'each' function][each]. For example, take a simple tree:
 
 [each]: http://underscorejs.org/#each
 
-    var tree = {
-      'name': { 'first': 'Bucky', 'last': 'Fuller' },
-      'occupations': ['designer', 'inventor']
-    };
+``` js
+var tree = {
+  'name': { 'first': 'Bucky', 'last': 'Fuller' },
+  'occupations': ['designer', 'inventor']
+};
+```
 
 We can do a preorder traversal of the tree:
 
-    var walk = require('tree-walk');
+``` js
+ var walk = require('tree-walk');
 
-    walk.preorder(tree, function(value, key, parent) {
-      console.log(key + ': ' + value);
-    });
+walk.preorder(tree, function(value, key, parent) {
+  console.log(key + ': ' + value);
+});
+```
 
 which produces the following output:
 
-    undefined: [object Object]
-    name: [object Object]
-    first: Bucky
-    last: Fuller
-    occupations: designer,inventor
-    0: designer
-    1: inventor
+```
+undefined: [object Object]
+name: [object Object]
+first: Bucky
+last: Fuller
+occupations: designer,inventor
+0: designer
+1: inventor
+```
 
 A preorder traversal visits the nodes in the tree in a top-down fashion: first
 the root node is visited, then all of its child nodes are recursively visited.
@@ -52,8 +58,10 @@ This module provides versions of most of the
 some small differences that make them better suited for operating on trees. For
 example, you can use `filter` to get a list of all the strings in a tree:
 
-    var walk = require('tree-walk');
-    walk.filter(walk.preorder, _.isString);
+``` js
+var walk = require('tree-walk');
+walk.filter(walk.preorder, _.isString);
+```
 
 Like many other functions in this module, the argument to `filter` is a function
 indicating in what order the nodes should be visited. Currently, only
@@ -68,17 +76,21 @@ parent, a naïve walk would encounter circular references. To handle such cases,
 you can create a custom walker by invoking `walk` as a function, and passing
 it a function which returns the descendants of a given node. E.g.:
 
-    var walk = require('tree-walk');
-    var domWalker = walk(function(el) {
-      return el.children;
-    });
+``` js
+var walk = require('tree-walk');
+var domWalker = walk(function(el) {
+  return el.children;
+});
+```
 
 The resulting object has the same functions as `walk`, but parameterized
 to use the custom walking behavior:
 
-    var buttons = domWalker.filter(walk.preorder, function(el) {
-      return el.tagName === 'BUTTON';
-    });
+``` js
+var buttons = domWalker.filter(walk.preorder, function(el) {
+  return el.tagName === 'BUTTON';
+});
+```
 
 However, it's not actually necessary to create custom walkers for DOM nodes --
 walk handles DOM nodes specially by default.
@@ -90,43 +102,51 @@ A _parse tree_ is tree that represents the syntactic structure of a formal
 language. For example, the arithmetic expression `1 + (4 + 2) * 7` might have the
 following parse tree:
 
-    var tree = {
+``` js
+var tree = {
+  'type': 'Addition',
+  'left': { 'type': 'Value', 'value': 1 },
+  'right': {
+    'type': 'Multiplication',
+    'left': {
       'type': 'Addition',
-      'left': { 'type': 'Value', 'value': 1 },
-      'right': {
-        'type': 'Multiplication',
-        'left': {
-  	      'type': 'Addition',
-  	      'left': { 'type': 'Value', 'value': 4 },
-  	      'right': { 'type': 'Value', 'value': 2 }
-        },
-        'right': { 'type': 'Value', 'value': 7 }
-      }
-    };
+      'left': { 'type': 'Value', 'value': 4 },
+      'right': { 'type': 'Value', 'value': 2 }
+    },
+    'right': { 'type': 'Value', 'value': 7 }
+  }
+};
+```
 
 We can create a custom walker for this parse tree:
 
-    var walk = require('tree-walk');
-    var parseTreeWalker = walk(function(node) {
-      return _.pick(node, 'left', 'right');
-    });
+``` js
+var walk = require('tree-walk');
+var parseTreeWalker = walk(function(node) {
+  return _.pick(node, 'left', 'right');
+});
+```
 
 Using the `find` function, we could find the first occurrence of the addition
 operator. It uses a pre-order traversal of the tree, so the following code
 will produce the root node (`tree`):
 
-    parseTreeWalker.find(tree, function(node) {
-      return node.type === 'Addition';
-    });
+``` js
+parseTreeWalker.find(tree, function(node) {
+  return node.type === 'Addition';
+});
+```
 
 We could use the `reduce` function to evaluate the arithmetic expression
 represented by the tree. The following code will produce `43`:
 
-    parseTreeWalker.reduce(tree, function(memo, node) {
-      if (node.type === 'Value') return node.value;
-      if (node.type === 'Addition') return memo.left + memo.right;
-      if (node.type === 'Multiplication') return memo.left * memo.right;
-    });
+``` js
+parseTreeWalker.reduce(tree, function(memo, node) {
+  if (node.type === 'Value') return node.value;
+  if (node.type === 'Addition') return memo.left + memo.right;
+  if (node.type === 'Multiplication') return memo.left * memo.right;
+});
+```
 
 When the visitor function is called on a node, the `memo` argument contains
 the results of calling `reduce` on each of the node's subtrees. To evaluate a
